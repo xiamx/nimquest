@@ -7,6 +7,7 @@ import std/times
 import std/strutils
 import std/os
 import std/re
+include config
 
 type MastodonClient = tuple
   httpClient: HttpClient
@@ -18,7 +19,7 @@ proc createMastodonClient(apiRoot: string, accessToken: string): MastodonClient 
   return (client, apiRoot)
 
 proc getNotifications(client: MastodonClient): JsonNode =
-  let response = client.httpClient.getContent(client.apiRoot & "/api/v1/notifications")
+  let response = client.httpClient.getContent(client.apiRoot & "/api/v1/notifications?exclude_types%5B%5D=reblog&exclude_types%5B%5D=follow&exclude_types%5B%5D=favourite&limit=100")
   return parseJson(response)
 
 proc postStatus(client: MastodonClient, data: MultipartData): JsonNode =
@@ -43,10 +44,14 @@ proc isNotificationProcessed(db: DbConn, statusId: string): bool =
 
 proc checkNotification() =
   let db = open("db.sqlite3", "", "", "")
-  let apiRoot = "https://hello.2heng.xin"
-  let mastodonClient = createMastodonClient(apiRoot, "***REMOVED***")
+  let mastodonClient = createMastodonClient(apiRoot, clientAccessToken)
 
-  var payloadNode = mastodonClient.getNotifications()
+  var payloadNode: JsonNode
+  try:
+    payloadNode = mastodonClient.getNotifications()
+  except ProtocolError:
+    echo "[E] Failed to check notifications"
+    return
 
   let dtFormat = "yyyy-MM-dd'T'HH:mm:ss'.'fff'Z'"
 
@@ -57,6 +62,9 @@ proc checkNotification() =
     if not notification.contains("status"):
       continue
     let status = notification["status"]
+    if not status.contains("id") or status.kind != JObject:
+      echo "skipping non status notification "  & notification["id"].getStr()
+      continue
     let statusId = status["id"].getStr()
     if db.isNotificationProcessed(statusId):
       continue
@@ -141,6 +149,7 @@ proc checkNotification() =
 
 when isMainModule:
   while true:
+    echo "[L] Checking notifications..."
     checkNotification()
     sleep(30000)
 
