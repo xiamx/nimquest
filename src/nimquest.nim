@@ -137,7 +137,7 @@ proc checkNotification() =
         else:
           var data = newMultipartData()
           data["status"] = "@" & answererUsername & " 回复了一条匿名问题：" & question & "\n\n" & answer & "\n\n" & "#nimquest #匿名问答"
-          data["visibility"] = "unlisted"
+          data["visibility"] = "public"
 
           discard mastodonClient.postStatus(data)
           echo "[A][Answerer: " & answererUsername & "]" & ": " & answer
