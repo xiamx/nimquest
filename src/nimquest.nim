@@ -51,10 +51,11 @@ proc checkNotification() =
   let dtFormat = "yyyy-MM-dd'T'HH:mm:ss'.'fff'Z'"
 
   for notification in payloadNode:
-    sleep(10000)
     let notificationType = notification["type"].getStr()
     let notificationDT = parse(notification["created_at"].getStr(), dtFormat).utc
 
+    if not notification.contains("status"):
+      continue
     let status = notification["status"]
     let statusId = status["id"].getStr()
     if db.isNotificationProcessed(statusId):
@@ -127,7 +128,7 @@ proc checkNotification() =
           echo "[B][Answerer: " & answererUsername & "][Asker: " & asker & "]"
         else:
           var data = newMultipartData()
-          data["status"] = "@" & answererUsername & " 回复了一条匿名问题：" & question & "\n\n" & answer
+          data["status"] = "@" & answererUsername & " 回复了一条匿名问题：" & question & "\n\n" & answer & "\n\n" & "#nimquest #匿名问答"
           data["visibility"] = "unlisted"
 
           discard mastodonClient.postStatus(data)
@@ -141,5 +142,5 @@ proc checkNotification() =
 when isMainModule:
   while true:
     checkNotification()
-    sleep(5000)
+    sleep(30000)
 
