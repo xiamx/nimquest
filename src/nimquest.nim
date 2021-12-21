@@ -14,8 +14,9 @@ type MastodonClient = tuple
   apiRoot: string
 
 proc sendHeartBeat() = 
-  let client = newHttpClient()
-  discard client.getContent("https://cronitor.link/p/" & cronitorKey & "/" & cronitorMonitor & "?message='alive'")
+  if cronitorKey != "":
+    let client = newHttpClient()
+    discard client.getContent("https://cronitor.link/p/" & cronitorKey & "/" & cronitorMonitor & "?message='alive'")
 
 proc createMastodonClient(apiRoot: string, accessToken: string): MastodonClient =
   let client = newHttpClient()
