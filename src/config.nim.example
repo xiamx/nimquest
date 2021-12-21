@@ -1,2 +1,4 @@
 let apiRoot = "https://hello.2heng.xin"
 let clientAccessToken = ""
+let cronitorKey = ""
+let cronitorMonitor = ""

@@ -13,6 +13,10 @@ type MastodonClient = tuple
   httpClient: HttpClient
   apiRoot: string
 
+proc sendHeartBeat() = 
+  let client = newHttpClient()
+  discard client.getContent("https://cronitor.link/p/" & cronitorKey & "/" & cronitorMonitor & "?message='alive'")
+
 proc createMastodonClient(apiRoot: string, accessToken: string): MastodonClient =
   let client = newHttpClient()
   client.headers = newHttpHeaders({ "Authorization": "Bearer " & accessToken })
@@ -151,5 +155,6 @@ when isMainModule:
   while true:
     echo "[L] Checking notifications..."
     checkNotification()
+    sendHeartBeat()
     sleep(30000)
 
